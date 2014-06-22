@@ -5,8 +5,6 @@ output: html_document
 
 TITLE: Human Activity Recognition
 
-INTRODUCTION
-
 METHODOLOGY
 
 Data collection:
@@ -47,7 +45,7 @@ train<-train[,-min]
 std<-grep("stddev",names(train)) ## stddev
 train<-train[,-std]
 
-avg<-grep("avg",names(train)) ## averges
+avg<-grep("avg",names(train)) ## averages
 train<-train[,-avg]
 
 kurt<-grep("kurtosis",names(train)) ## kurtosis
