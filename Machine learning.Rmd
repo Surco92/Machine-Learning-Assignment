@@ -1,0 +1,119 @@
+---
+title: "HAR"
+output: html_document
+---
+
+TITLE: Human Activity Recognition
+
+INTRODUCTION
+
+METHODOLOGY
+
+Data collection:
+
+I loaded the training dataset avaiable from course webpage using R[1]. Dataset contains various measures of subjects performing activities such as sitting, standing or walking[2].
+
+Data cleaning:
+
+Dataset is quite big, it contains 160 variables and 19622. I removed all variables that did not contained relevant data. Removed variables contained data such as averages, standart deviations and skewness measures which are not psysical readings from accelometers representing the activity. 
+
+Modeling:
+
+I build bagged tree model and used 2-fold cross validation. 
+
+RESULT
+Firstly, variables not representing readings form accelerometers, such as averages, minimums and amplitudes were removed. 
+ 
+```{r}
+###CLEARING THE DATA
+pml.training <- read.csv("C:/DOWNLOAD/pml-training.csv")
+
+train<-pml.training
+
+train<-train[,-c(1,2,3,4,5,6,7)] ## unrelevant variables
+ 
+skw<-grep("skew",names(train)) ## skewness
+train<-train[,-skw]
+
+vr<-grep("var",names(train)) ##  variance
+train<-train[,-vr]
+
+min<-grep("min",names(train)) ## minimums
+train<-train[,-min]
+
+std<-grep("stddev",names(train)) ## stddev
+train<-train[,-std]
+
+avg<-grep("avg",names(train)) ## averges
+train<-train[,-avg]
+
+kurt<-grep("kurtosis",names(train)) ## kurtosis
+train<-train[,-kurt]
+
+ampli<-grep("amplitude",names(train)) ## amplitude
+train<-train[,-ampli]
+
+mx<-grep("max",names(train)) ## maximum
+train<-train[,-mx]
+
+tot<-grep("total",names(train)) ## totals
+train<-train[,-tot]
+
+fin.data<-mplt[complete.cases(train),]
+```
+After cleaning the data 59 variables remained. These variables represents readings from accelerometers. Subsequently, data were splitted to two sets.
+
+```{r}
+### SPLITTING TRAINING SET
+set.seed(1337)
+index<-createFolds(fin.data$classe,k=2,list=TRUE,returnTrain=FALSE)
+
+set1<-fin.data[unlist(index[1]),]
+set2<-fin.data[unlist(index[2]),]
+```
+ 
+ I trained bagged tree model1 on set1 and tested it on set2. Subsequently, I trained  model2 on set2 and tested it with set1. My  model1 has prediction accuracy 0.9992 on set1 and  0.9785 on set2. Model2 has prediction accuracy 0.9998 on set2, 0.9803 on set 1.  Therefore I estimate accuracy around 0.98  on final testing set.
+
+```{r}
+### FITTING MODELS
+modelFit1<-train(set1$classe~.,method="treebag",data=set1)
+confusionMatrix(set1$classe,predict(modelFit1,set1))
+confusionMatrix(set2$classe,predict(modelFit1,set2))
+
+modelFit2<-train(set2$classe~.,method="treebag",data=set2)
+confusionMatrix(set2$classe,predict(modelFit2,set2))
+confusionMatrix(set1$classe,predict(modelFit2,set1))
+```
+
+Finally, loaded the test dataset and predicted activity using my model. Both my models had same results on testing set.
+
+
+
+```{r}
+### TESTING
+
+pml.testing <- read.csv("C:/DOWNLOAD/pml-testing.csv")
+test.set<-pml.testing
+
+confusionMatrix(predict(modelFit1,test.set),predict(modelFit2,test.set))
+answers<-predict(modelFit1,test.set)
+```
+
+CONCLUSION
+
+Although, we obtained very good prediction accuracy my model is very impractical. Training of the model lasted about 20 minutes and model object has about 135Mb.
+There could be also problem with variables selection. Another thing is, that model is completely black box.
+
+
+
+REFERENCES
+
+1.  R Core Team (2012). ”R: A language and environment for statistical computing.” URL: http://www.R-project.org
+
+2.Ugulino, W.; Cardador, D.; Vega, K.; Velloso, E.; Milidiu, R.; Fuks, H. Wearable Computing: Accelerometers' Data Classification of Body Postures and Movements. Proceedings of 21st Brazilian Symposium on Artificial Intelligence. Advances in Artificial Intelligence - SBIA 2012. In: Lecture Notes in Computer Science. , pp. 52-61. Curitiba, PR: Springer Berlin / Heidelberg, 2012. ISBN 978-3-642-34458-9. DOI: 10.1007/978-3-642-34459-6_6. 
+
+
+
+
+
+
